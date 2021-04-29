@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <title>All Products</title>
+</head>
+
+<head>
+  <title>Figure Store</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+</head>
+
+<body>
+
+  <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        </button>
+      </div>
+      <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav">
+          <li><a href="/login">Log Out</a></li>
+        </ul>
+        <form style="padding: 15px 0;" action="/doSearchProducts" method="post">
+          <input type="text" name="txtName" id="" style=";">
+          <label for style="color: brown;">{{model.searchError}}</label>
+          <input type="submit" value="Search">
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <body>
+
+    <br>
+    <button><a href="insertProducts">Add new products</a></button>
+    <hr>
+    <table class="table bordered">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Amount</th>
+          <th>Image</th>
+          <th>Delete</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      {{#each model}}
+      <tr>
+        <td>{{name}}</td>
+        <td>{{price}} $</td>
+        <td>{{amount}}</td>
+        <td><img width="200px" , height="200px" src="{{image}}" alt=""></td>
+        <td><a href="/delete?id={{_id}}">Delete</a></td>
+        <td><a href="/update?id={{_id}}">Update</a></td>
+      </tr>
+      {{/each}}
+    </table>
+  </body>
+
+</html>
