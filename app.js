@@ -1,9 +1,20 @@
+//Library
 var express = require('express')
 var engines = require('consolidate')
 var app = express()
 
-const session = require('express-session');
+var hbs = require('hbs')
+app.set('view engine', 'hbs')
 
+var bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: false }))
+
+var MongoClient = require('mongodb').MongoClient;
+//var url = 'mongodb://localhost:27017';
+var url = 'mongodb+srv://ngotiendung:2012dung@cluster0.7kcqi.mongodb.net/test';
+
+//Login Session
+const session = require('express-session');
 app.use(session({
     resave: true,
     saveUninitialized: true,
@@ -11,23 +22,10 @@ app.use(session({
     cookie: { maxAge: 60000 }
 }));
 
-var MongoClient = require('mongodb').MongoClient;
-var url = 'mongodb://localhost:27017';
-//var url = 'mongodb+srv://ngotiendung:2012dung@cluster0.7kcqi.mongodb.net/test';
-var hbs = require('hbs')
-app.set('view engine', 'hbs')
-
-var bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: false }))
-
-app.get('/login', (req, res) => {
-    res.render('login')
-})
-
+//Register new account
 app.get('/register', (req, res) => {
     res.render('register')
-})
-
+});
 app.post('/new', async (req, res) => {
     var nameInput = req.body.txtName;
     var passInput = req.body.txtPassword;
@@ -38,8 +36,11 @@ app.post('/new', async (req, res) => {
     let dbo = client.db("atnstore");
     await dbo.collection("users").insertOne(newUser);
     res.redirect('/login')
-})
-
+});
+//Login Page
+app.get('/login', (req, res) => {
+    res.render('login')
+});
 app.post('/doLogin', async (req, res) => {
     var nameInput = req.body.txtName;
     var passInput = req.body.txtPassword;
@@ -47,9 +48,7 @@ app.post('/doLogin', async (req, res) => {
     let dbo = client.db("atnstore");
     const cursor = dbo.collection("users").
         find({ $and: [{ name: nameInput }, { password: passInput }] });
-
     const count = await cursor.count();
-
     if (count == 0) {
         res.render('login', { message: 'Invalid user!' })
     } else {
@@ -69,8 +68,9 @@ app.post('/doLogin', async (req, res) => {
             res.redirect('/')
         }
     }
-})
+});
 
+//Index user page
 app.get('/', async (req, res) => {
     var user = req.session.User;
     let client = await MongoClient.connect(url, { useUnifineTopology: true });
@@ -86,41 +86,42 @@ app.get('/', async (req, res) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//Index Administrators page
 app.get('/allProducts', async (req, res) => {
     var user = req.session.User;
     let client = await MongoClient.connect(url, { useUnifineTopology: true });
     let dbo = client.db("atnstore");
     let results = await dbo.collection("products").find({}).toArray();
     if (!user || user.name == '') {
-        res.render('notLogin', { message: 'user chua dang nhap' })
+        res.render('notLogin', { message: 'Please Login to continue' })
     } else {
         res.render('allProducts', { name: user.name, role: user.role, model: results })
 
     }
 })
 
+//Insert Product function
 app.get('/insertProducts', (req, res) => {
     res.render('insertProducts');
-})
-
+});
 app.post('/doInsertProducts', async (req, res) => {
     let inputName = req.body.txtName;
     let inputPrice = req.body.txtPrice;
     let inputAmount = req.body.txtAmount;
     let inputImage = req.body.txtImage;
 
-    //neu khong nhap gia tri
+    //check not input anything
     if (inputName.trim().length == 0) {
         res.render('insertProducts', { nameError: "You not input Name!", priceError: null, amountError: null });
     } else {
-        //khong duoc nhap chu
+        //check not number
         if (isNaN(inputPrice, inputAmount)) {
-            res.render('insertProducts', { nameError: null, priceError: "Chi duoc nhap so", amountError: "Chi duoc nhap so" });
+            res.render('insertProducts', { nameError: null, priceError: "Only Number", amountError: "Only Number" });
             return false;
         };
-        //khong duoc nhap vao so am
+        //check not input negative numbers
         if (inputPrice < 1 || inputAmount < 1) {
-            res.render('insertProducts', { nameError: null, priceError: "Gia tri phai lon hon 0", amountError: "Gia tri phai lon hon 0" });
+            res.render('insertProducts', { nameError: null, priceError: "Price greater than 0", amountError: "Price greater than 0" });
             return false;
         }
         let newProducts = { name: inputName, price: inputPrice, amount: inputAmount, image: inputImage };
@@ -129,8 +130,9 @@ app.post('/doInsertProducts', async (req, res) => {
         await dbo.collection("products").insertOne(newProducts);
         res.redirect('/allProducts');
     }
-})
+});
 
+//Delete product function
 app.get('/delete', async (req, res) => {
     let inputId = req.query.id;
     let client = await MongoClient.connect(url);
@@ -139,8 +141,9 @@ app.get('/delete', async (req, res) => {
     let condition = { "_id": ObjectID(inputId) };
     await dbo.collection("products").deleteOne(condition);
     res.redirect('/allProducts');
+});
 
-})
+//Search products function
 app.post('/doSearchProducts', async (req, res) => {
     let inputName = req.body.txtName;
     let client = await MongoClient.connect(url);
@@ -149,8 +152,9 @@ app.post('/doSearchProducts', async (req, res) => {
     //let results = await dbo.collection("products").find({}).sort({ Name: -1 }).toArray();
 
     res.render('allProducts', { model: results });
-})
+});
 
+//Update product function
 app.get('/update', async (req, res) => {
     let inputId = req.query.id;
     let client = await MongoClient.connect(url);
@@ -159,8 +163,7 @@ app.get('/update', async (req, res) => {
     let condition = { "_id": ObjectID(inputId) };
     let results = await dbo.collection("products").find(condition).toArray();
     res.render('update', { model: results });
-})
-
+});
 app.post('/doupdate', async (req, res) => {
     let inputId = req.body.id;
     let inputName = req.body.txtName;
@@ -191,8 +194,9 @@ app.post('/doupdate', async (req, res) => {
         await dbo.collection("products").updateOne(condition, Change);
         res.redirect('/allProducts');
     }
-})
+});
 
+//server connecting
 const PORT = process.env.PORT || 5000
 app.listen(PORT);
 console.log("Server is running 5000")
